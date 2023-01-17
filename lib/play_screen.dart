@@ -12,6 +12,7 @@ class _PlayScreenState extends State<PlayScreen> {
   // create an instance of the Music player
   final player = AudioPlayer();
   bool isPlaying = false;
+  IconData btnIcon = Icons.play_arrow;
 
   // setting the duration
   Duration? duration = const Duration(seconds: 0);
@@ -28,20 +29,24 @@ class _PlayScreenState extends State<PlayScreen> {
   void initState() {
     super.initState();
     initPlayer();
-    // setAudio();
-    //
-    // // Listen to state: playing, paused, stopped
-    // player.onPlayerStateChanged.listen((state) {
-    //   setState(() {
-    //     isPlaying = state == PlayerState.playing;
-    //   });
-    // });
-    // // Listen to audio duration
-    // player.onDurationChanged.listen((newDuration) {
-    //   setState(() {
-    //     duration = newDuration;
-    //   });
-    // });
+
+    // Listen to state: playing, paused, stopped
+    player.onPlayerStateChanged.listen((state) {
+      setState(() {
+        isPlaying = state == PlayerState.playing;
+      });
+    });
+    // Listen to audio duration
+    player.onDurationChanged.listen((newDuration) {
+      setState(() {
+        duration = newDuration;
+      });
+    });
+    player.onPositionChanged.listen((event) {
+      setState(() {
+        position = event;
+      });
+    });
   }
 
   @override
@@ -92,7 +97,7 @@ class _PlayScreenState extends State<PlayScreen> {
                 Slider.adaptive(
                     min: 0.0,
                     max: duration!.inSeconds.toDouble(),
-                    value: currentSliderValue,
+                    value: position.inSeconds.toDouble(),
                     onChanged: (value) {},
                     onChangeEnd: (newValue) async {
                       setState(() {
@@ -103,7 +108,7 @@ class _PlayScreenState extends State<PlayScreen> {
                       await player.resume();
                     },
                     activeColor: Colors.white),
-                //Expanded(child: SizedBox()),
+
                 Text('${duration!.inMinutes} : ${duration!.inSeconds % 60}'),
               ],
             ),
@@ -111,19 +116,19 @@ class _PlayScreenState extends State<PlayScreen> {
           CircleAvatar(
             radius: 35,
             child: IconButton(
-              icon: Icon(
-                isPlaying ? Icons.pause : Icons.play_arrow,
-              ),
+              icon: Icon(btnIcon),
               iconSize: 50,
               onPressed: () async {
                 if (isPlaying) {
                   await player.pause();
                   setState(() {
+                    btnIcon = Icons.pause;
                     isPlaying = false;
                   });
                 } else {
                   await player.resume();
                   setState(() {
+                    btnIcon = Icons.play_arrow;
                     isPlaying = true;
                   });
                   // now let's track the value
@@ -146,12 +151,4 @@ class _PlayScreenState extends State<PlayScreen> {
       ),
     );
   }
-
-// Future setAudio() async {
-//   // repeat song when completed
-//   player.setReleaseMode(ReleaseMode.loop);
-//   // Load audio from URL
-//   String url = 'https://youtu.be/mLCsbacHxA8';
-//   player.setSourceUrl(url);
-// }
 }
