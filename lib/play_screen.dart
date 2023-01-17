@@ -9,42 +9,60 @@ class PlayScreen extends StatefulWidget {
 }
 
 class _PlayScreenState extends State<PlayScreen> {
-  final audioPlayer = AudioPlayer();
+  // create an instance of the Music player
+  final player = AudioPlayer();
   bool isPlaying = false;
-  Duration duration = Duration.zero;
+
+  // setting the duration
+  Duration? duration = const Duration(seconds: 0);
   Duration position = Duration.zero;
+  double currentSliderValue = 0;
+
+  // create a function to initiate the music into player
+  void initPlayer() async {
+    await player.setSource(AssetSource("music.mp3"));
+    duration = await player.getDuration();
+  }
 
   @override
   void initState() {
     super.initState();
-
-    setAudio();
-
-    // Listen to state: playing, paused, stopped
-    audioPlayer.onPlayerStateChanged.listen((state) {
-      setState(() {
-        isPlaying = state == PlayerState.playing;
-      });
-    });
-    // Listen to audio duration
-    audioPlayer.onDurationChanged.listen((newDuration) {
-      setState(() {
-        duration = newDuration;
-      });
-    });
+    initPlayer();
+    // setAudio();
+    //
+    // // Listen to state: playing, paused, stopped
+    // player.onPlayerStateChanged.listen((state) {
+    //   setState(() {
+    //     isPlaying = state == PlayerState.playing;
+    //   });
+    // });
+    // // Listen to audio duration
+    // player.onDurationChanged.listen((newDuration) {
+    //   setState(() {
+    //     duration = newDuration;
+    //   });
+    // });
   }
 
   @override
   void dispose() {
-    audioPlayer.dispose();
+    player.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: const Text(
+          "지금 당신이 듣는 음악",
+          style: TextStyle(color: Colors.black),
+        ),
+        centerTitle: true,
+      ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -63,28 +81,16 @@ class _PlayScreenState extends State<PlayScreen> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 32),
           const Text('비오', style: TextStyle(fontSize: 20)),
-          Slider(
-            min: 0.0,
-            max: duration.inSeconds.toDouble(),
-            value: position.inSeconds.toDouble(),
-            onChanged: (double value) async {
-              setState(() {
-                value = value;
-              });
-              //final position = Duration(seconds: value.toInt());
-              // await audioPlayer.seek(position);
-
-              //Optional: Play audio if was paused
-              // await audioPlayer.resume();
-            },
-          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
-              children: const [
-                Text('00:00'),
-                Expanded(child: SizedBox()),
-                Text('03:42'),
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('00:00'),
+                Slider.adaptive(
+                    value: 0, onChanged: (value) {}, activeColor: Colors.white),
+                //Expanded(child: SizedBox()),
+                Text('${duration!.inMinutes} : ${duration!.inSeconds % 60}'),
                 //Text(format(Duration position)=> position.toString()),
                 //Text(formatTime(duration - position)),
               ],
@@ -99,9 +105,9 @@ class _PlayScreenState extends State<PlayScreen> {
               iconSize: 50,
               onPressed: () async {
                 if (isPlaying) {
-                  await audioPlayer.pause();
+                  await player.pause();
                 } else {
-                  await audioPlayer.resume();
+                  await player.resume();
                 }
               },
             ),
@@ -113,9 +119,9 @@ class _PlayScreenState extends State<PlayScreen> {
 
   Future setAudio() async {
     // repeat song when completed
-    audioPlayer.setReleaseMode(ReleaseMode.loop);
+    player.setReleaseMode(ReleaseMode.loop);
     // Load audio from URL
     String url = 'https://youtu.be/mLCsbacHxA8';
-    audioPlayer.setSourceUrl(url);
+    player.setSourceUrl(url);
   }
 }
