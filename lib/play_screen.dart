@@ -86,13 +86,25 @@ class _PlayScreenState extends State<PlayScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('00:00'),
+                // 재생된 시간을 표시
+                Text(
+                    '${(currentSliderValue / 60).floor()}:${(currentSliderValue % 60).floor()}'),
                 Slider.adaptive(
-                    value: 0, onChanged: (value) {}, activeColor: Colors.white),
+                    min: 0.0,
+                    max: duration!.inSeconds.toDouble(),
+                    value: currentSliderValue,
+                    onChanged: (value) {},
+                    onChangeEnd: (newValue) async {
+                      setState(() {
+                        currentSliderValue = newValue;
+                      });
+                      player.pause();
+                      await player.seek(Duration(seconds: newValue.toInt()));
+                      await player.resume();
+                    },
+                    activeColor: Colors.white),
                 //Expanded(child: SizedBox()),
                 Text('${duration!.inMinutes} : ${duration!.inSeconds % 60}'),
-                //Text(format(Duration position)=> position.toString()),
-                //Text(formatTime(duration - position)),
               ],
             ),
           ),
@@ -106,8 +118,26 @@ class _PlayScreenState extends State<PlayScreen> {
               onPressed: () async {
                 if (isPlaying) {
                   await player.pause();
+                  setState(() {
+                    isPlaying = false;
+                  });
                 } else {
                   await player.resume();
+                  setState(() {
+                    isPlaying = true;
+                  });
+                  // now let's track the value
+                  player.onPositionChanged.listen(
+                    (position) {
+                      setState(() {
+                        currentSliderValue = position.inSeconds.toDouble();
+                      });
+                    },
+                  );
+
+                  // setState(() async {
+                  //   duration = await player.getDuration();
+                  // });
                 }
               },
             ),
@@ -117,11 +147,11 @@ class _PlayScreenState extends State<PlayScreen> {
     );
   }
 
-  Future setAudio() async {
-    // repeat song when completed
-    player.setReleaseMode(ReleaseMode.loop);
-    // Load audio from URL
-    String url = 'https://youtu.be/mLCsbacHxA8';
-    player.setSourceUrl(url);
-  }
+// Future setAudio() async {
+//   // repeat song when completed
+//   player.setReleaseMode(ReleaseMode.loop);
+//   // Load audio from URL
+//   String url = 'https://youtu.be/mLCsbacHxA8';
+//   player.setSourceUrl(url);
+// }
 }
